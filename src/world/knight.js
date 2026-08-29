@@ -26,7 +26,7 @@ export class Knight {
     this.state = State.IDLE;
     this.isNearPlayer = false;
     this.isAttacking = false;
-    this.attackHit = false;
+    this.onAttackHit = null;
     this.isReady = false;
 
     const angle = Math.random() * Math.PI * 2;
@@ -61,7 +61,7 @@ export class Knight {
         this.mixer = new THREE.AnimationMixer(fbx);
         this.mixer.addEventListener("finished", () => this._onAnimFinished());
         this.mixer.addEventListener("loop", (e) => {
-          if (e.action === this.attackAction) this.attackHit = true;
+          if (e.action === this.attackAction && this.onAttackHit) this.onAttackHit();
         });
 
         if (fbx.animations.length > 0) {

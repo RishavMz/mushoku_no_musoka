@@ -1,2 +1,7 @@
 # mushoku_no_musoka
-Sometimes I wonder about the actions I perform when bored 😅
+
+WORK IN PROGRESS
+
+This is something I randomly tried to build when I was bored 😅
+
+Stay tuned for more updates...

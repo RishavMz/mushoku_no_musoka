@@ -1,14 +1,14 @@
-import { AudioEngine } from "./audioEngine.js";
+import { AudioEngine } from "./AudioEngine.js";
 
 export class PlayerAudio {
   constructor() {
     this.engine = new AudioEngine();
     this.stepTimer = 0;
-    window.playerAudioRef = this;
   }
 
   init() {
     this.engine.init();
+    if (this.engine.ctx) this.engine.ctx.resume().catch(() => {});
   }
 
   updateFootsteps(delta, isMoving, isGrounded, isSprinting) {

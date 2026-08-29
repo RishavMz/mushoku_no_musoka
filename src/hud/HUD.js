@@ -321,16 +321,16 @@ export class HUD {
     this.interactPromptEl = document.getElementById("hud-interact-prompt");
 
     this.isToxicZone = false;
+    this._onStart = null;
 
     this.overlayEl.addEventListener("click", () => {
-      if (window.playerAudioRef) {
-        window.playerAudioRef.init();
-        if (window.playerAudioRef.engine && window.playerAudioRef.engine.ctx) {
-          window.playerAudioRef.engine.ctx.resume();
-        }
-      }
+      if (this._onStart) this._onStart();
       this.overlayEl.style.display = "none";
     });
+  }
+
+  setOnStart(callback) {
+    this._onStart = callback;
   }
 
   updateVitals(

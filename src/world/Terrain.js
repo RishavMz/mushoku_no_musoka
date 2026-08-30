@@ -12,7 +12,9 @@ export class Terrain {
     const textureLoader = new THREE.TextureLoader();
 
     // 2. Base Texture Settings
-    const groundTexture = textureLoader.load("/textures/ground.jpg");
+    const groundTexture = textureLoader.load(
+      `${import.meta.env.BASE_URL}textures/ground.jpg`,
+    );
     groundTexture.wrapS = THREE.RepeatWrapping;
     groundTexture.wrapT = THREE.RepeatWrapping;
     groundTexture.repeat.set(100, 100);
@@ -21,14 +23,6 @@ export class Terrain {
     // 3. Ground Plane with Random Vertex Displacement
     const geometry = new THREE.PlaneGeometry(300, 300, 64, 64);
     geometry.rotateX(-Math.PI / 2);
-
-    const posAttribute = geometry.attributes.position;
-    for (let i = 0; i < posAttribute.count; i++) {
-      // Add subtle height randomness to break up flat shading
-      const randomHeight = (Math.random() - 0.5) * 0.6;
-      posAttribute.setY(i, posAttribute.getY(i) + randomHeight);
-    }
-    geometry.computeVertexNormals();
 
     // 4. Base Ground Material
     const material = new THREE.MeshStandardMaterial({

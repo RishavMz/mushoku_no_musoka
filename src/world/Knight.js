@@ -44,7 +44,7 @@ export class Knight {
     const loader = new FBXLoader();
 
     loader.load(
-      "/animations/knight.fbx",
+      `${import.meta.env.BASE_URL}animations/knight.fbx`,
       (fbx) => {
         this.mesh = fbx;
         fbx.scale.setScalar(0.01);
@@ -71,7 +71,7 @@ export class Knight {
         }
 
         loader.load(
-          "/animations/Macarena.fbx",
+          `${import.meta.env.BASE_URL}animations/Macarena.fbx`,
           (macarenaFbx) => {
             if (macarenaFbx.animations.length > 0) {
               this.macarenaAction = this.mixer.clipAction(
@@ -82,7 +82,7 @@ export class Knight {
             }
 
             loader.load(
-              "/animations/Walking.fbx",
+              `${import.meta.env.BASE_URL}animations/Walking.fbx`,
               (walkFbx) => {
                 if (walkFbx.animations.length > 0) {
                   this.walkAction = this.mixer.clipAction(
@@ -92,7 +92,7 @@ export class Knight {
                 }
 
                 loader.load(
-                  "/animations/Attack.fbx",
+                  `${import.meta.env.BASE_URL}animations/Attack.fbx`,
                   (attackFbx) => {
                     if (attackFbx.animations.length > 0) {
                       this.attackAction = this.mixer.clipAction(

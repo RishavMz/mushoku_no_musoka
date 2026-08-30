@@ -14,6 +14,7 @@ export class PlayerControls {
 
     this.euler = new THREE.Euler(0, 0, 0, "YXZ");
     this.onFlashlightToggleCallback = null;
+    this.onSwingCallback = null;
 
     this.initEvents();
   }
@@ -49,6 +50,11 @@ export class PlayerControls {
 
     document.addEventListener("keydown", (event) => this.onKeyDown(event));
     document.addEventListener("keyup", (event) => this.onKeyUp(event));
+
+    document.addEventListener("mousedown", (event) => {
+      if (!this.isLocked) return;
+      if (event.button === 0 && this.onSwingCallback) this.onSwingCallback();
+    });
   }
 
   onKeyDown(event) {

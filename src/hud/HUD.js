@@ -217,12 +217,24 @@ export class HUD {
               </div>
             </div>
 
-            <div class="watch-footer">
-              <div class="light-indicator">
-                <div class="light-dot" id="hud-light-dot"></div>
-                <span id="hud-flashlight-status">BEAM ON [F]</span>
+            <div class="watch-footer" style="flex-direction: column; align-items: stretch; gap: 4px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="light-indicator">
+                  <div class="light-dot" id="hud-light-dot"></div>
+                  <span id="hud-flashlight-status">BEAM ON [F]</span>
+                </div>
+                <span style="opacity: 0.6; font-size: 9px;">SYS.02</span>
               </div>
-              <span style="opacity: 0.6; font-size: 9px;">SYS.02</span>
+              <div style="display: flex; gap: 10px;">
+                <div class="light-indicator">
+                  <div class="light-dot" id="hud-key-dot" style="background: #443322; box-shadow: none;"></div>
+                  <span id="hud-key-status" style="color: #775533;">KEY</span>
+                </div>
+                <div class="light-indicator">
+                  <div class="light-dot" id="hud-sword-dot" style="background: #443322; box-shadow: none;"></div>
+                  <span id="hud-sword-status" style="color: #775533;">SWORD</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -268,7 +280,7 @@ export class HUD {
         white-space: nowrap;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       ">
-        [ E ]&nbsp;&nbsp;INTERACT
+        [ E ]&nbsp;&nbsp;<span id="hud-interact-label">INTERACT</span>
       </div>
 
       <div id="start-overlay" style="
@@ -319,6 +331,11 @@ export class HUD {
     this.overlayEl = document.getElementById("start-overlay");
 
     this.interactPromptEl = document.getElementById("hud-interact-prompt");
+    this.interactLabelEl = document.getElementById("hud-interact-label");
+    this.keyDotEl = document.getElementById("hud-key-dot");
+    this.keyStatusEl = document.getElementById("hud-key-status");
+    this.swordDotEl = document.getElementById("hud-sword-dot");
+    this.swordStatusEl = document.getElementById("hud-sword-status");
 
     this.isToxicZone = false;
     this._onStart = null;
@@ -422,8 +439,19 @@ export class HUD {
     }
   }
 
-  showInteractPrompt(visible) {
+  showInteractPrompt(visible, label = "INTERACT") {
     this.interactPromptEl.style.display = visible ? "block" : "none";
+    if (visible) this.interactLabelEl.innerText = label;
+  }
+
+  updateInventory(hasKey, hasSword) {
+    this.keyDotEl.style.background = hasKey ? "#ffaa00" : "#443322";
+    this.keyDotEl.style.boxShadow = hasKey ? "0 0 6px #ffaa00" : "none";
+    this.keyStatusEl.style.color = hasKey ? "#e69d35" : "#775533";
+
+    this.swordDotEl.style.background = hasSword ? "#ffaa00" : "#443322";
+    this.swordDotEl.style.boxShadow = hasSword ? "0 0 6px #ffaa00" : "none";
+    this.swordStatusEl.style.color = hasSword ? "#e69d35" : "#775533";
   }
 
   showDeathState() {

@@ -2,6 +2,11 @@ import * as THREE from "three";
 import { Terrain } from "../world/Terrain.js";
 import { Player } from "../player/Player.js";
 import { Knight } from "../world/Knight.js";
+import { Key } from "../world/Key.js";
+import { LootBox } from "../world/LootBox.js";
+import { randomPositionNear } from "../world/spawnUtils.js";
+
+const SWORD_DAMAGE = 25;
 
 export class Game {
   constructor() {
@@ -43,9 +48,28 @@ export class Game {
     this.terrain = new Terrain(this.scene);
     this.player = new Player(this.camera, this.scene, this.terrain);
     this.knight = new Knight(this.scene);
+    this.key = null;
+    this.lootBox = null;
 
     // Knight deals damage through the player's health system
     this.knight.onAttackHit = () => this.player.health.takeDamage(10);
+
+    // Key/box arc only runs once — no point spawning another key once armed
+    this.knight.onEnterAttack = () => {
+      if (this.player.hasSword || this.key || this.lootBox) return;
+      this.key = new Key(
+        this.scene,
+        randomPositionNear(this.camera.position, this.terrain, 2, 4),
+      );
+    };
+
+    this.player.controls.onSwingCallback = () => {
+      if (!this.player.swingSword()) return;
+      if (this.knight.canBeHit(this.camera.position)) {
+        this.knight.takeDamage(SWORD_DAMAGE);
+        this.player.audio.playSwordHit();
+      }
+    };
   }
 
   _initEvents() {
@@ -56,8 +80,27 @@ export class Game {
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.code === "KeyE" && this.knight.isNearPlayer) this.knight.interact();
+      if (e.code !== "KeyE") return;
+      if (this.knight.isNearPlayer) this.knight.interact();
+      else if (this.key && this.key.isNearPlayer) this._collectKey();
+      else if (this.lootBox && this.lootBox.isNearPlayer) this._unlockBox();
     });
+  }
+
+  _collectKey() {
+    this.key.pickup();
+    this.key = null;
+    this.player.pickupKey();
+    this.lootBox = new LootBox(
+      this.scene,
+      randomPositionNear(this.camera.position, this.terrain, 2, 4),
+    );
+  }
+
+  _unlockBox() {
+    this.lootBox.unlock();
+    this.lootBox = null;
+    this.player.unlockBox();
   }
 
   _loop() {
@@ -66,7 +109,18 @@ export class Game {
 
     this.player.update(delta);
     this.knight.update(delta, this.camera.position);
-    this.player.setInteractPrompt(this.knight.isNearPlayer);
+    if (this.key) this.key.update(delta, this.camera.position);
+    if (this.lootBox) this.lootBox.update(delta, this.camera.position);
+
+    if (this.knight.isNearPlayer) {
+      this.player.setInteractPrompt(true, "INTERACT");
+    } else if (this.key && this.key.isNearPlayer) {
+      this.player.setInteractPrompt(true, "PICK UP KEY");
+    } else if (this.lootBox && this.lootBox.isNearPlayer) {
+      this.player.setInteractPrompt(true, "UNLOCK BOX");
+    } else {
+      this.player.setInteractPrompt(false);
+    }
 
     this.renderer.render(this.scene, this.camera);
   }

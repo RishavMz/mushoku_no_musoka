@@ -29,4 +29,20 @@ export class PlayerAudio {
   playFlashlightToggle() {
     this.engine.playToggleSound();
   }
+
+  playKeyPickup() {
+    this.engine.playPickup();
+  }
+
+  playBoxUnlock() {
+    this.engine.playUnlock();
+  }
+
+  playSwordSwing() {
+    this.engine.playSwordSwing();
+  }
+
+  playSwordHit() {
+    this.engine.playSwordHit();
+  }
 }

@@ -3,6 +3,7 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 
 const INTERACT_RANGE = 3; // units — show [E] prompt
 const STOP_RANGE = 2; // units — switch to attack
+const MELEE_RANGE = 3; // units — sword reach
 const WALK_SPEED = 1.0; // units/sec
 
 const State = {
@@ -27,7 +28,10 @@ export class Knight {
     this.isNearPlayer = false;
     this.isAttacking = false;
     this.onAttackHit = null;
+    this.onEnterAttack = null;
     this.isReady = false;
+    this.health = 100;
+    this.maxHealth = 100;
 
     const angle = Math.random() * Math.PI * 2;
     const dist = 6 + Math.random() * 6;
@@ -142,8 +146,25 @@ export class Knight {
     if (this.state === State.INTERACTING) {
       this._goTo(State.MACARENA, this.macarenaAction);
     } else if (this.state === State.MACARENA) {
+      this.health = this.maxHealth;
       this._goTo(State.FOLLOWING, this.walkAction);
     }
+  }
+
+  canBeHit(cameraPosition) {
+    if (!this.mesh) return false;
+    if (this.state !== State.FOLLOWING && this.state !== State.ATTACKING) return false;
+
+    const dx = cameraPosition.x - this.mesh.position.x;
+    const dz = cameraPosition.z - this.mesh.position.z;
+    return dx * dx + dz * dz <= MELEE_RANGE * MELEE_RANGE;
+  }
+
+  takeDamage(amount) {
+    if (this.state !== State.FOLLOWING && this.state !== State.ATTACKING) return;
+
+    this.health = Math.max(0, this.health - amount);
+    this._goTo(State.MACARENA, this.macarenaAction);
   }
 
   _goTo(newState, nextAction) {
@@ -182,6 +203,7 @@ export class Knight {
       if (inRange) {
         // Enter attack state
         this._goTo(State.ATTACKING, this.attackAction);
+        if (this.onEnterAttack) this.onEnterAttack();
       } else {
         // Move and face player
         const dist = Math.sqrt(distSq);

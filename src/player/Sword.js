@@ -45,6 +45,10 @@ export class Sword {
     this.group.visible = true;
   }
 
+  hide() {
+    this.group.visible = false;
+  }
+
   swing() {
     if (this.isSwinging) return;
     this.isSwinging = true;

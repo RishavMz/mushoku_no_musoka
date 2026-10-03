@@ -4,13 +4,14 @@ const PICKUP_RANGE = 2.5;
 const SPAWN_HEIGHT = 1.0;
 
 export class Key {
-  constructor(scene, position) {
+  constructor(scene) {
     this.scene = scene;
     this.isNearPlayer = false;
+    this.isActive = false;
     this.age = 0;
 
     this.group = new THREE.Group();
-    this.group.position.set(position.x, SPAWN_HEIGHT, position.z);
+    this.group.visible = false;
 
     const material = new THREE.MeshStandardMaterial({
       color: 0xffcc33,
@@ -39,16 +40,31 @@ export class Key {
     tooth.position.z = 0.52;
     this.group.add(tooth);
 
-    this.light = new THREE.PointLight(0xffcc33, 3, 4);
-    this.group.add(this.light);
+    // Kept permanently visible (only intensity toggles) — flipping a light's own
+    // `visible` changes the scene's total light count, which forces every lit
+    // material to recompile its shader. A constant light count avoids that.
+    this.light = new THREE.PointLight(0xffcc33, 0, 4);
+    this.scene.add(this.light);
 
     this.scene.add(this.group);
   }
 
+  spawn(position) {
+    this.group.position.set(position.x, SPAWN_HEIGHT, position.z);
+    this.group.visible = true;
+    this.light.position.copy(this.group.position);
+    this.light.intensity = 3;
+    this.isActive = true;
+    this.age = 0;
+  }
+
   update(delta, cameraPosition) {
+    if (!this.isActive) return;
+
     this.age += delta;
     this.group.position.y = SPAWN_HEIGHT + Math.sin(this.age * 2) * 0.15;
     this.group.rotation.y += delta * 1.5;
+    this.light.position.copy(this.group.position);
 
     const dx = cameraPosition.x - this.group.position.x;
     const dz = cameraPosition.z - this.group.position.z;
@@ -56,12 +72,9 @@ export class Key {
   }
 
   pickup() {
-    this.scene.remove(this.group);
-    this.group.traverse((child) => {
-      if (child.isMesh) {
-        child.geometry.dispose();
-        child.material.dispose();
-      }
-    });
+    this.group.visible = false;
+    this.light.intensity = 0;
+    this.isActive = false;
+    this.isNearPlayer = false;
   }
 }

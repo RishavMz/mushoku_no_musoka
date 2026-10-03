@@ -30,14 +30,16 @@ export class Game {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    document.getElementById("game-container").appendChild(this.renderer.domElement);
+    document
+      .getElementById("game-container")
+      .appendChild(this.renderer.domElement);
   }
 
   _initScene() {
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(0x0a0806, 0.1);
 
-    const sun = new THREE.DirectionalLight(0xffffff, 1);
+    const sun = new THREE.DirectionalLight(0xffffff, 0.5);
     sun.position.set(10, 20, 10);
     this.scene.add(sun);
     this.scene.add(new THREE.AmbientLight(0x1a120b, 0.4));
@@ -48,17 +50,18 @@ export class Game {
     this.terrain = new Terrain(this.scene);
     this.player = new Player(this.camera, this.scene, this.terrain);
     this.knight = new Knight(this.scene);
-    this.key = null;
-    this.lootBox = null;
+    this.key = new Key(this.scene);
+    this.lootBox = new LootBox(this.scene);
+    this._warmShaders();
 
     // Knight deals damage through the player's health system
     this.knight.onAttackHit = () => this.player.health.takeDamage(10);
 
     // Key/box arc only runs once — no point spawning another key once armed
     this.knight.onEnterAttack = () => {
-      if (this.player.hasSword || this.key || this.lootBox) return;
-      this.key = new Key(
-        this.scene,
+      if (this.player.hasSword || this.key.isActive || this.lootBox.isActive)
+        return;
+      this.key.spawn(
         randomPositionNear(this.camera.position, this.terrain, 2, 4),
       );
     };
@@ -68,8 +71,26 @@ export class Game {
       if (this.knight.canBeHit(this.camera.position)) {
         this.knight.takeDamage(SWORD_DAMAGE);
         this.player.audio.playSwordHit();
+        this.player.consumeSword();
+        if (!this.key.isActive && !this.lootBox.isActive) {
+          this.key.spawn(
+            randomPositionNear(this.camera.position, this.terrain, 2, 4),
+          );
+        }
       }
     };
+  }
+
+  // Forces WebGL to compile shaders for later-appearing objects up front,
+  // so their first real spawn mid-gameplay doesn't stutter.
+  _warmShaders() {
+    this.key.group.visible = true;
+    this.lootBox.group.visible = true;
+    this.player.sword.group.visible = true;
+    this.renderer.compile(this.scene, this.camera);
+    this.key.group.visible = false;
+    this.lootBox.group.visible = false;
+    this.player.sword.group.visible = false;
   }
 
   _initEvents() {
@@ -82,24 +103,21 @@ export class Game {
     document.addEventListener("keydown", (e) => {
       if (e.code !== "KeyE") return;
       if (this.knight.isNearPlayer) this.knight.interact();
-      else if (this.key && this.key.isNearPlayer) this._collectKey();
-      else if (this.lootBox && this.lootBox.isNearPlayer) this._unlockBox();
+      else if (this.key.isNearPlayer) this._collectKey();
+      else if (this.lootBox.isNearPlayer) this._unlockBox();
     });
   }
 
   _collectKey() {
     this.key.pickup();
-    this.key = null;
     this.player.pickupKey();
-    this.lootBox = new LootBox(
-      this.scene,
+    this.lootBox.spawn(
       randomPositionNear(this.camera.position, this.terrain, 2, 4),
     );
   }
 
   _unlockBox() {
     this.lootBox.unlock();
-    this.lootBox = null;
     this.player.unlockBox();
   }
 
@@ -109,14 +127,14 @@ export class Game {
 
     this.player.update(delta);
     this.knight.update(delta, this.camera.position);
-    if (this.key) this.key.update(delta, this.camera.position);
-    if (this.lootBox) this.lootBox.update(delta, this.camera.position);
+    this.key.update(delta, this.camera.position);
+    this.lootBox.update(delta, this.camera.position);
 
     if (this.knight.isNearPlayer) {
       this.player.setInteractPrompt(true, "INTERACT");
-    } else if (this.key && this.key.isNearPlayer) {
+    } else if (this.key.isNearPlayer) {
       this.player.setInteractPrompt(true, "PICK UP KEY");
-    } else if (this.lootBox && this.lootBox.isNearPlayer) {
+    } else if (this.lootBox.isNearPlayer) {
       this.player.setInteractPrompt(true, "UNLOCK BOX");
     } else {
       this.player.setInteractPrompt(false);

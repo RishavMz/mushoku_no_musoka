@@ -57,6 +57,12 @@ export class Player {
     this.audio.playBoxUnlock();
   }
 
+  consumeSword() {
+    this.hasSword = false;
+    this.sword.hide();
+    this.hud.updateInventory(this.hasKey, this.hasSword);
+  }
+
   swingSword() {
     if (!this.hasSword || this.sword.isSwinging) return false;
     this.sword.swing();

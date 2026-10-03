@@ -4,13 +4,14 @@ const UNLOCK_RANGE = 2.5;
 const SPAWN_HEIGHT = 0.4;
 
 export class LootBox {
-  constructor(scene, position) {
+  constructor(scene) {
     this.scene = scene;
     this.isNearPlayer = false;
+    this.isActive = false;
     this.age = 0;
 
     this.group = new THREE.Group();
-    this.group.position.set(position.x, SPAWN_HEIGHT, position.z);
+    this.group.visible = false;
 
     const bodyMaterial = new THREE.MeshStandardMaterial({
       color: 0x5c3a21,
@@ -33,7 +34,16 @@ export class LootBox {
     this.scene.add(this.group);
   }
 
+  spawn(position) {
+    this.group.position.set(position.x, SPAWN_HEIGHT, position.z);
+    this.group.visible = true;
+    this.isActive = true;
+    this.age = 0;
+  }
+
   update(delta, cameraPosition) {
+    if (!this.isActive) return;
+
     this.age += delta;
     const pulse = 0.5 + Math.sin(this.age * 3) * 0.5;
     this.latch.material.emissiveIntensity = 0.3 + pulse * 0.6;
@@ -44,12 +54,8 @@ export class LootBox {
   }
 
   unlock() {
-    this.scene.remove(this.group);
-    this.group.traverse((child) => {
-      if (child.isMesh) {
-        child.geometry.dispose();
-        child.material.dispose();
-      }
-    });
+    this.group.visible = false;
+    this.isActive = false;
+    this.isNearPlayer = false;
   }
 }
